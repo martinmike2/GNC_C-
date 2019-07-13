@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<data>
+  <controls launchTimeAdvance="20" 
+            verticalAscentTime="5"
+            pitchOverAngle="5"
+            upfgActivation="60"
+            launchAzimuth=""
+            initialRoll=""
+  ></controls>
+  <vehicle>
+    <stage
+      name="stage1"
+      massTotal="100"
+      massFuel="10"
+      massDry=""
+      gLim="1"
+      minThrottle="0.2"
+      throttle="1.0"
+      shutdownRequired="1"
+      >
+      <engines>
+        <engine isp="215" thrust="1000" flow=""></engine>
+      </engines>
+      <staging
+        jettison="1"
+        waitBeforeJettison="0"
+        ignition="1"
+        waitBeforeIgnition="1"
+        ullage="none"
+        ullageBurnDuration=""
+        postUllageBurn=""
+        ></staging>
+    </stage>
+  </vehicle>
+  <sequences>
+    <sequence time="0" type="stage"></sequence>
+  </sequences>
+  <mission
+    payload=""
+    apoapsis="100"
+    periapsis="100"
+    altitude=""
+    inclination=""
+    LAN=""
+    direction=""
+    ></mission>
+</data>
