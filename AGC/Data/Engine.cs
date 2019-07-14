@@ -1,20 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace AGC
+namespace AGC.Data
 {
-    class Engine
+    public class Engine
     {
 
         public Engine(double g0, double throttle, double isp, double thrust = 0, double flow = 0)
         {
-            ISP = isp;
+            Isp = isp;
             Thrust = thrust;
 
-            if (flow == 0)
+            if (Math.Abs(flow) < 0.0000001)
             {
                 Flow = thrust / (isp * g0) * throttle;
             } else
@@ -23,9 +19,9 @@ namespace AGC
             }
         }
 
-        public double ISP { get; set; }
+        public double Isp { get; }
 
-        public double Thrust { get; set; }
-        public double Flow { get; set; }
+        private double Thrust { get; }
+        public double Flow { get; }
     }
 }

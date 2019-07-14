@@ -42,17 +42,11 @@
     <Reference Include="KRPC.Client, Version=0.4.8.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\KRPC.Client.0.4.8\lib\net45\KRPC.Client.dll</HintPath>
     </Reference>
-    <Reference Include="MathNet.Numerics, Version=4.8.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MathNet.Numerics.4.8.1\lib\net40\MathNet.Numerics.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -61,26 +55,48 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Computer.cs" />
     <Compile Include="Controls.cs" />
-    <Compile Include="CSER.cs" />
-    <Compile Include="Engine.cs" />
+    <Compile Include="Data\CserState.cs" />
+    <Compile Include="Data\Engine.cs" />
+    <Compile Include="Data\Globals.cs" />
+    <Compile Include="Data\Guidance.cs" />
+    <Compile Include="Data\Mission.cs" />
+    <Compile Include="Data\Staging.cs" />
+    <Compile Include="Data\UpfgState.cs" />
+    <Compile Include="Data\VehicleState.cs" />
+    <Compile Include="Data\Target.cs" />
+    <Compile Include="Data\Vehicle.cs" />
+    <Compile Include="Data\VehicleStage.cs" />
+    <Compile Include="Events\Event.cs" />
+    <Compile Include="Events\EventFactory.cs" />
+    <Compile Include="Events\Handler.cs" />
+    <Compile Include="Events\Jettison.cs" />
+    <Compile Include="Events\Launch.cs" />
+    <Compile Include="Events\Message.cs" />
+    <Compile Include="Events\Roll.cs" />
+    <Compile Include="Events\Stage.cs" />
+    <Compile Include="Events\Throttle.cs" />
+    <Compile Include="Guidance\CSER.cs" />
+    <Compile Include="Guidance\UPFG.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Registers.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="Staging.cs" />
-    <Compile Include="Vehicle.cs" />
-    <Compile Include="VehicleStage.cs" />
+    <Compile Include="Utilities\AgcMath.cs" />
+    <Compile Include="Utilities\AGCTuple.cs" />
+    <Compile Include="Utilities\Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="test_vehicle.xml" />
+    <Content Include="scratch.json" />
+    <Content Include="test_vehicle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /y $(ProjectDir)test_vehicle.xml $(ProjectDir)$(OutDir)</PostBuildEvent>
+    <PostBuildEvent Condition="'$(OS)' != 'Unix'">xcopy /y $(ProjectDir)test_vehicle.xml $(ProjectDir)$(OutDir)</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -1,28 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AGC
+﻿namespace AGC
 {
-    class Controls
+    public class Controls
     {
-        private double launchTimeAdvance;
-        private double verticalAscentTime;
-        private double pitchOverAngle;
-        private double upfgActivation;
-        private double launchAzimuth;
-        private double initialRoll;
+        public double LaunchTimeAdvance { get; set; }
+        public double VerticalAscentTime { get; set; }
+        public double PitchOverAngle { get; set; }
+        public double UPFGActivation { get; set; }
+        public double LaunchAzimuth { get; set; }
+        public double InitialRoll { get; set; }
 
         public Controls(double launchTimeAdvance, double verticalAscentTime, double pitchOverAngle, double upfgActivation, double launchAzimuth = 0, double initialRoll = 0)
         {
-            this.launchTimeAdvance = launchTimeAdvance;
-            this.verticalAscentTime = verticalAscentTime;
-            this.pitchOverAngle = pitchOverAngle;
-            this.upfgActivation = upfgActivation;
-            this.launchAzimuth = launchAzimuth;
-            this.initialRoll = initialRoll;
+            LaunchTimeAdvance = launchTimeAdvance;
+            VerticalAscentTime = verticalAscentTime;
+            PitchOverAngle = pitchOverAngle;
+            UPFGActivation = upfgActivation;
+            LaunchAzimuth = launchAzimuth;
+            InitialRoll = initialRoll;
         }
     }
 }

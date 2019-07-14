@@ -33,7 +33,7 @@
     </stage>
   </vehicle>
   <sequences>
-    <sequence time="0" type="stage"></sequence>
+    <sequence time="0" type="launch" message="Liftoff!"></sequence>
   </sequences>
   <mission
     payload=""
