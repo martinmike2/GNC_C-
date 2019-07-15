@@ -15,6 +15,11 @@ namespace AGC.Utilities
             Z = z;
         }
 
+        public static implicit operator Tuple<double, double, double>(AgcTuple x)
+        {
+            return new Tuple<double, double, double>(x.X, x.Y, x.Z);
+        }
+
         public static implicit operator AgcTuple(Tuple<double, double, double> x)
         {
             return new AgcTuple(x.Item1, x.Item2, x.Item3);

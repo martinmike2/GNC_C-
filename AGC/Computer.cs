@@ -26,11 +26,15 @@ namespace AGC
         {
             try
             {
-                Globals.SteeringVector = AgcMath.cross(
+                var facing = Globals.KrpConnection.SpaceCenter().ActiveVessel.Direction(
+                    Globals.KrpConnection.SpaceCenter().ActiveVessel.SurfaceReferenceFrame
+                );
+                /*Globals.SteeringVector = AgcMath.cross(
                     Globals.KrpConnection.SpaceCenter().ActiveVessel.Orbit.Body
                         .Position(Globals.KrpConnection.SpaceCenter().ActiveVessel.ReferenceFrame),
                     Globals.KrpConnection.SpaceCenter().ActiveVessel.Velocity(Globals.KrpConnection.SpaceCenter().ActiveVessel.ReferenceFrame)
-                );
+                );*/
+                Globals.SteeringVector = facing;
                 Globals.CurrentTime = Globals.KrpConnection.SpaceCenter().UT;
                 Globals.TimeToOrbitIntercept = Utilities.Utilities.orbitInterceptTime(Globals.MissionData.Direction);
                 Globals.LiftOffTime = Globals.CurrentTime + Globals.TimeToOrbitIntercept - Globals.ControlData.LaunchTimeAdvance;
@@ -57,9 +61,10 @@ namespace AGC
             
                 Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.Engage();
                 Globals.KrpConnection.SpaceCenter().ActiveVessel.Control.Throttle = (float)Globals.ThrottleSetting;
-            
-            
-            
+                Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.TargetDirection = Globals.SteeringVector;
+                var activeVessel = Globals.KrpConnection.SpaceCenter().ActiveVessel;
+
+
                 Console.WriteLine("Preflight Completed");
                 return true;
             }

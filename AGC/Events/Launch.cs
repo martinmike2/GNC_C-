@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AGC.Data;
 using KRPC.Client.Services.SpaceCenter;
@@ -12,6 +13,7 @@ namespace AGC.Events
 
         public override void execute()
         {
+            //Console.WriteLine("LAUNCH!");
             Globals.KrpConnection.SpaceCenter().ActiveVessel.Control.ActivateNextStage();
             Globals.LiftOffFlag = true;
         }
