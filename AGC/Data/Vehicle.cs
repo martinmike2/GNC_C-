@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using AGC.Utilities;
+using KRPC.Client.Services.SpaceCenter;
 
 namespace AGC.Data
 {
@@ -12,5 +14,12 @@ namespace AGC.Data
         }
 
         public void addVehicleStage(VehicleStage stage) => Stages.Add(stage);
+
+        public AgcTuple getSolarPrimeVector()
+        {
+            return Utilities.Utilities.solarPrimeVector(
+                    Globals.KrpConnection.SpaceCenter().ActiveVessel.OrbitalReferenceFrame
+            );
+        }
     }
 }

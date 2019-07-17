@@ -17,5 +17,24 @@ namespace AGC.Data
             Angle = angle;
             Normal = normal;
         }
+
+        public AgcTuple calculateNormal(double missionDataInclination, double missionDataLan)
+        {
+            var highPoint = Utilities.Utilities.rodrigues(
+                Globals.VehicleData.getSolarPrimeVector(),
+                new AgcTuple(0, 1, 0),
+                90 - missionDataLan
+            );
+            
+            var rotationAxis = new AgcTuple(
+                -highPoint.Z,
+                highPoint.Y,
+                highPoint.X
+                );
+
+            var normal = Utilities.Utilities.rodrigues(highPoint, rotationAxis, 90 - missionDataInclination);
+
+            return -1 * Utilities.Utilities.vecYZ(normal);
+        }
     }
 }

@@ -2,9 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Runtime.CompilerServices;
+using System.Runtime.Remoting.Channels;
 using System.Xml;
 using AGC.Data;
 using AGC.Events;
+using AGC.Guidance;
+using AGC.Utilities;
 using KRPC.Client;
 using KRPC.Client.Services.SpaceCenter;
 using Engine = AGC.Data.Engine;
@@ -20,19 +24,21 @@ namespace AGC
         static void Main()
         {
             Globals.KrpConnection = new Connection(
-                name: "My Example",
+                "My Example",
                 address: IPAddress.Parse("192.168.1.105"),
-                rpcPort: 1000,
-                streamPort: 1001
+                //IPAddress.Parse("172.0.0.1"),
+                1000,
+                1001
             );
 
             loadData();
             setupGlobals();
             _eventHandler = new Handler();
-            var _computer = new Computer(_eventHandler);
+            var computer = new Computer(_eventHandler);
             setSystemEvents();
             setupSequence();
-            startTimer();
+            //onTimedEvent(null, null, computer);
+            startTimer(computer);
             
             do {
                 while (! Console.KeyAvailable) {
@@ -42,12 +48,40 @@ namespace AGC
             
         }
 
-        private static void startTimer()
+        private static void startTimer(Computer computer)
         {
             System.Timers.Timer loopTimer = new System.Timers.Timer();
-            loopTimer.Elapsed += Computer.onTimedEvent;
-            loopTimer.Interval = 1000;
+            loopTimer.Elapsed += (sender, e) => onTimedEvent(sender, e, computer);
+            loopTimer.Interval = 250;
             loopTimer.Enabled = true;
+        }
+        
+        public static void onTimedEvent(object source, System.Timers.ElapsedEventArgs e, Computer computer
+        )
+        {
+            Globals.CurrentTime = Globals.KrpConnection.SpaceCenter().UT;
+            computer.execute();
+            _eventHandler.execute();
+            
+
+            if (!Globals.LiftOffFlag)
+            {
+                var t = TimeSpan.FromSeconds( Globals.LiftOffTime - Globals.CurrentTime );
+
+                var answer = $"{t.Hours:D2}h:{t.Minutes:D2}m:{t.Seconds:D2}s";
+         
+                Console.SetCursorPosition(0, Console.CursorTop - 1);
+                ClearCurrentConsoleLine();
+                Console.WriteLine("Time to Launch: {0}", answer);
+            }
+            
+            void ClearCurrentConsoleLine()
+            {
+                var currentLineCursor = Console.CursorTop;
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write(new string(' ', Console.WindowWidth)); 
+                Console.SetCursorPosition(0, currentLineCursor);
+            }
         }
 
         private static void setupGlobals()
@@ -61,7 +95,8 @@ namespace AGC
             Globals.UpfgConverged = false;
             Globals.StagingInProgress = false;
             Globals.LiftOffFlag = false;
-
+            Globals.AscentFlag = 0;
+            Globals.UpfgTarget = new Target(0, 0, 0, new AgcTuple(0,0,0));
         }
 
         private static void setSystemEvents()
@@ -213,8 +248,8 @@ namespace AGC
             var missionNode = doc.DocumentElement?.SelectSingleNode("/data/mission");
 
             buildControls(controlsNode);
-            buildMission(missionNode);
             buildVehicle(vehicleNode);
+            buildMission(missionNode);
         }
 
         private static XmlDocument getDataPackage()
@@ -264,13 +299,12 @@ namespace AGC
 
             if (lan > 360) { lan = lan % 360; }
 
-            Globals.Solarprimevector = Utilities.Utilities.solarPrimeVector(
-                Globals.KrpConnection.SpaceCenter().ActiveVessel.OrbitalReferenceFrame);
+           
 
             Globals.CurrentNode = Utilities.Utilities.nodeVector(inclination, direction);
-            var currentLan = Utilities.AgcMath.angle(Globals.CurrentNode, Globals.Solarprimevector);
+            var currentLan = Utilities.AgcMath.angle(Globals.CurrentNode, Globals.VehicleData.getSolarPrimeVector());
 
-            if (Utilities.AgcMath.dot(new Utilities.AgcTuple(0,1,0), Utilities.AgcMath.cross(Globals.CurrentNode, Globals.Solarprimevector)) < 0)
+            if (Utilities.AgcMath.dot(new Utilities.AgcTuple(0,1,0), Utilities.AgcMath.cross(Globals.CurrentNode, Globals.VehicleData.getSolarPrimeVector())) < 0)
             {
                 currentLan = 360 - currentLan;
             }
@@ -299,7 +333,7 @@ namespace AGC
                 double.TryParse(stage.Attributes?.GetNamedItem("throttle").Value, out var throttle);
                 bool.TryParse(stage.Attributes?.GetNamedItem("shutdownRequired").Value, out var shutdownRequired);
 
-                var stg = new VehicleStage(name, massTotal, massFuel, massDry, gLim, minThrottle, throttle, shutdownRequired, Globals.MissionData.Payload);
+                var stg = new VehicleStage(name, massTotal, massFuel, massDry, gLim, minThrottle, throttle, shutdownRequired);
 
                 var children = stage.ChildNodes;
 

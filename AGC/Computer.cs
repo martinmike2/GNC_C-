@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using AGC.Data;
 using AGC.Events;
 using AGC.Utilities;
@@ -26,15 +28,8 @@ namespace AGC
         {
             try
             {
-                var facing = Globals.KrpConnection.SpaceCenter().ActiveVessel.Direction(
-                    Globals.KrpConnection.SpaceCenter().ActiveVessel.SurfaceReferenceFrame
-                );
-                /*Globals.SteeringVector = AgcMath.cross(
-                    Globals.KrpConnection.SpaceCenter().ActiveVessel.Orbit.Body
-                        .Position(Globals.KrpConnection.SpaceCenter().ActiveVessel.ReferenceFrame),
-                    Globals.KrpConnection.SpaceCenter().ActiveVessel.Velocity(Globals.KrpConnection.SpaceCenter().ActiveVessel.ReferenceFrame)
-                );*/
-                Globals.SteeringVector = facing;
+                
+                Globals.SteeringVector = new AgcTuple(1, 0, 0);
                 Globals.CurrentTime = Globals.KrpConnection.SpaceCenter().UT;
                 Globals.TimeToOrbitIntercept = Utilities.Utilities.orbitInterceptTime(Globals.MissionData.Direction);
                 Globals.LiftOffTime = Globals.CurrentTime + Globals.TimeToOrbitIntercept - Globals.ControlData.LaunchTimeAdvance;
@@ -58,13 +53,15 @@ namespace AGC
                 {
                     Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.TargetRoll = 0f;
                 }
-            
+
+                Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.ReferenceFrame =
+                    Globals.KrpConnection.SpaceCenter().ActiveVessel.SurfaceReferenceFrame;
                 Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.Engage();
                 Globals.KrpConnection.SpaceCenter().ActiveVessel.Control.Throttle = (float)Globals.ThrottleSetting;
                 Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.TargetDirection = Globals.SteeringVector;
-                var activeVessel = Globals.KrpConnection.SpaceCenter().ActiveVessel;
 
-
+                
+                
                 Console.WriteLine("Preflight Completed");
                 return true;
             }
@@ -74,30 +71,114 @@ namespace AGC
                 throw;
             }
         }
-         
-        public static void onTimedEvent(object source, System.Timers.ElapsedEventArgs e)
+
+        // Execute a Loop
+        public void execute()
         {
-            Globals.CurrentTime = Globals.KrpConnection.SpaceCenter().UT;
-            _eventHandler.execute();
-
-            if (!Globals.LiftOffFlag)
+            if (Globals.AscentFlag == 0)
             {
-                var t = TimeSpan.FromSeconds( Globals.LiftOffTime - Globals.CurrentTime );
-
-                var answer = $"{t.Hours:D2}h:{t.Minutes:D2}m:{t.Seconds:D2}s";
-         
-                Console.SetCursorPosition(0, Console.CursorTop - 1);
-                ClearCurrentConsoleLine();
-                Console.WriteLine("Time to Launch: {0}", answer);
-            }
-            
-            void ClearCurrentConsoleLine()
+                if (Globals.CurrentTime > Globals.LiftOffTime + Globals.ControlData.VerticalAscentTime)
+                {
+                    pointTo(
+                         Globals.MissionData.LaunchAzimuth,
+                         90 - Globals.ControlData.PitchOverAngle
+                    );
+                    Globals.AscentFlag = 1;
+                    _eventHandler.addEvent(
+                        new Message(
+                            new Dictionary<string, string>
+                            {
+                                {"type", "print"},
+                                {"message", $"Pitching over by {Math.Round(Globals.ControlData.PitchOverAngle, 1)} degrees."},
+                                {"time", "0"}
+                            })
+                        );
+                    _eventHandler.addEvent(
+                        new Message(
+                            new Dictionary<string, string>
+                            {
+                                {"type", "print"},
+                                {"message", $"Burning on heading {Math.Round(Globals.MissionData.LaunchAzimuth, 1)} degrees."},
+                                {"time", "0"}
+                            })
+                        );
+                }
+            } else if (Globals.AscentFlag == 1)
             {
-                var currentLineCursor = Console.CursorTop;
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write(new string(' ', Console.WindowWidth)); 
-                Console.SetCursorPosition(0, currentLineCursor);
+                if (Globals.CurrentTime > Globals.LiftOffTime + Globals.ControlData.VerticalAscentTime + 3)
+                {
+                    if (Globals.ControlData.PitchOverAngle - getVelocityAngle() < 0.1)
+                    {
+                        Globals.AscentFlag = 2;
+                    }
+
+                    if (Globals.CurrentTime >= Globals.LiftOffTime + Globals.ControlData.VerticalAscentTime +
+                        Globals.PitchOverLimit)
+                    {
+                        Globals.AscentFlag = 2;
+                        _eventHandler.addEvent(new Message(new Dictionary<string, string>
+                        {
+                            {"type", "print"},
+                            {"message", "Pitchover time limit exceeded!"},
+                            {"time", "0"}
+                        }));
+                    }
+                }
+            } else if (Globals.AscentFlag == 2)
+            {
+                pointTo(Globals.MissionData.LaunchAzimuth, getVelocityAngle());
+                _eventHandler.addEvent(new Message(new Dictionary<string, string>
+                {
+                    {"type", "print"},
+                    {"message", $"Holding prograde at {Math.Round(Globals.MissionData.LaunchAzimuth, 1)} deg azimuth."},
+                    {"time", "0"}
+                }));
+
+                Globals.AscentFlag = 3;
+            } else
+            {
+                pointTo(Globals.MissionData.LaunchAzimuth, getVelocityAngle());
             }
+
+            if (Globals.CurrentTime >=
+                Globals.LiftOffTime + Globals.ControlData.UPFGActivation - Globals.UpfgConvergenceDelay)
+            {
+                _eventHandler.addEvent(new Message(new Dictionary<string, string>
+                {
+                    {"type", "print"},
+                    {"message", "Initiating UPFG!"},
+                    {"time", "0"}
+                }));
+                return;
+            }
+
+            Globals.UpfgTarget.Normal =
+                Globals.UpfgTarget.calculateNormal(Globals.MissionData.Inclination, Globals.MissionData.Lan);
+        }
+
+        private static double getVelocityAngle()
+        {
+            AgcTuple up = Globals.KrpConnection.SpaceCenter().TransformDirection(
+                new AgcTuple(0, 0, -1),
+                Globals.KrpConnection.SpaceCenter().ActiveVessel.ReferenceFrame,
+                Globals.KrpConnection.SpaceCenter().ActiveVessel.SurfaceReferenceFrame
+            );
+            var surfaceVel = Globals.KrpConnection.SpaceCenter().ActiveVessel.Velocity(
+                Globals.KrpConnection.SpaceCenter().ActiveVessel.SurfaceVelocityReferenceFrame
+            );
+
+            var velocityAngle = AgcMath.angle(up, surfaceVel);
+            return velocityAngle;
+        }
+
+
+        private static void pointTo(double heading, double pitch)
+        {
+            Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.TargetPitchAndHeading((float)pitch, (float)heading);
+        }
+        private static void pointTo(AgcTuple direction)
+        {
+            Globals.KrpConnection.SpaceCenter().ActiveVessel.AutoPilot.TargetDirection = direction;
         }
 
         private static void setupTarget()
@@ -121,9 +202,14 @@ namespace AGC
                 (2 / targetAltitude - 1 / sma)
             );
             var flightPathAngle = Math.Acos(srm / (targetVelocity * targetAltitude));
-            
-            
-            Globals.TargetData = new Target(targetAltitude, targetVelocity, flightPathAngle, new AgcTuple(0, 0, 0));
+
+            AgcTuple normal = new AgcTuple(0, 0, 0);
+            if (Globals.TargetData != null)
+            {
+                normal = Globals.TargetData.Normal;
+            }
+
+            Globals.TargetData = new Target(targetAltitude, targetVelocity, flightPathAngle, normal);
         }
     }
 }

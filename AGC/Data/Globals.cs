@@ -24,22 +24,14 @@ namespace AGC.Data
         public static double SteeringRoll { get; set; }
         public static bool UpfgConverged { get; set; }
         public static bool StagingInProgress { get; set; }
-        
         public static double CurrentTime { get; set; }
-
         public static double TimeToOrbitIntercept { get; set; }
-
         public static AgcTuple CurrentNode { get; set; }
-        
         public static Connection KrpConnection { get; set; }
-        
-        public static AgcTuple Solarprimevector { get; set; }
-        
         public static double LiftOffTime { get; set; }
-        
         public static Target UpfgTarget { get; set; }
-
         public static bool LiftOffFlag { get; set; }
+        public static int AscentFlag { get; set; }
         
         public static double PitchOverLimit = 20;
         public static double UpfgConvergenceDelay = 5;

@@ -21,6 +21,19 @@ namespace AGC.Utilities
 
         }
 
+        public static AgcTuple aimAndRoll(AgcTuple aimingVector, double rollAngle)
+        {
+            AgcTuple up = Globals.KrpConnection.SpaceCenter().TransformDirection(
+                new AgcTuple(0, 0, -1),
+                Globals.KrpConnection.SpaceCenter().ActiveVessel.ReferenceFrame,
+                Globals.KrpConnection.SpaceCenter().ActiveVessel.SurfaceReferenceFrame
+            );
+
+            AgcTuple rollVector = rodrigues(up, aimingVector, -rollAngle);
+
+            return aimingVector * rollVector;
+        }
+
         public static AgcTuple nodeVector(double inc, string direction)
         {
             var b = Math.Tan(90 - inc) *
@@ -47,7 +60,7 @@ namespace AGC.Utilities
             }
         }
 
-        private static AgcTuple rodrigues(AgcTuple inVector, AgcTuple axis, double angle)
+        public static AgcTuple rodrigues(AgcTuple inVector, AgcTuple axis, double angle)
         {
             axis = AgcMath.normalize(axis);
             var outVector = inVector * Math.Cos(angle);
@@ -82,7 +95,7 @@ namespace AGC.Utilities
             }
 
             Globals.CurrentNode = nodeVector(targetInc, direction);
-            AgcTuple targetNode = rodrigues(Globals.Solarprimevector, new AgcTuple(0, 1, 0), -targetLan);
+            AgcTuple targetNode = rodrigues(Globals.VehicleData.getSolarPrimeVector(), new AgcTuple(0, 1, 0), -targetLan);
             var nodeDelta = AgcMath.angle(Globals.CurrentNode, targetNode);
             var deltaDir = AgcMath.dot(new AgcTuple(0, 1, 0), AgcMath.cross(targetNode, Globals.CurrentNode));
 
@@ -95,6 +108,11 @@ namespace AGC.Utilities
                                nodeDelta / 360;
 
             return deltatime;
+        }
+
+        public static AgcTuple vecYZ(AgcTuple input)
+        {
+            return new AgcTuple(input.X, input.Z, input.Y);
         }
 
         public static double launchAzimuth()

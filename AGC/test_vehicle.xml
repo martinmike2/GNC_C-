@@ -40,7 +40,7 @@
     apoapsis="100"
     periapsis="100"
     altitude=""
-    inclination=""
+    inclination="10"
     LAN=""
     direction=""
     ></mission>
